@@ -15,7 +15,7 @@
 6) Predict
 
 ## 3. 디렉토리 구조
-```text
+```
 .
 ├─ assets/                # EDA 시각화 결과
 ├─ data/
@@ -30,7 +30,3 @@
 └─ README.md
 ```
 
-## 4. 설치 가이드
-1) 설치
-```bash
-pip install -r requirements.txt
