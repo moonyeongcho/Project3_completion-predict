@@ -1,32 +1,118 @@
-# 데이콘 제 2회 학습자 수료 예측 AI 경진대회
+# 학습자 수료 예측 AI 경진대회
 
-## 1. 프로젝트 설명
-- 목표: BDAI 학회의 학회원 데이터를 활용해 학습자의 **수료 여부(0/1)** 를 예측한다.
-- 평가 지표: Binary F1 Score
-- 대회 기간: 2026.01.12 - 2026.02.23
-- 결과: F1 score: 0.42
+> 데이콘 x BDA 제 2회 학습자 수료 예측 AI 경진대회  
+> 대회 기간: 2026.01.12 – 2026.02.23  
+> 평가 지표: Binary F1 Score  
+> 최종 점수: F1 = 0.42
 
-## 2. 프로젝트 파이프라인
-1) Data Load
-2) EDA (분포 및 결측 확인)
-3) Preprocess (결측 처리, 파생변수 생성, Bool 변환, 다중값 처리)
-4) Feature Selection (변수 중요도, p-value 검정)
-5) Model (5-fold + Optuna: RF/XGB/CAT + 블렌딩)
-6) Predict
+---
 
-## 3. 디렉토리 구조
+## 1. 프로젝트 개요
+
+BDAI 학회원 데이터를 기반으로 학습자의 수료 여부(0/1)를 예측하는 이진 분류 문제.  
+- 학습 데이터: 9기 학회원 데이터 (completed 레이블 포함)  
+- 예측 대상: 10기 학회원 데이터 (completed 예측)
+
+---
+
+## 2. 사용 데이터
+
+| 파일 | 설명 |
+|------|------|
+| train.csv | 9기 학회원 정보 + completed 레이블 |
+| test.csv | 10기 학회원 정보 |
+| sample_submission.csv | 제출 양식 |
+
+---
+
+## 3. 프로젝트 파이프라인
+
+```
+Data Load
+    │
+    ▼
+EDA (분포 및 결측 확인)
+    │
+    ▼
+Preprocess
+  - 파생변수 생성 (count_class, previous_class_count)
+  - Bool 변환 (re_registration, contest_participation, major_type)
+  - 결측치 처리 (숫자형: 중앙값, 범주형: 'Unknown')
+  - 다중값 처리 및 LabelEncoding
+    │
+    ▼
+Feature Selection
+  - 숫자형: Mann-Whitney U test
+  - 범주형: Chi-squared test
+  - p < 0.05 유의 피처만 선택 (경계선 p < 0.1 포함)
+    │
+    ▼
+Model (StratifiedKFold 5-fold + Optuna TPESampler)
+  - RandomForest (80 trials)
+  - XGBoost (80 trials)
+  - CatBoost (60 trials)
+  - 균등 블렌딩 (RF + XGB + CAT) / 3
+    │
+    ▼
+Threshold Tuning
+  - OOF 예측 확률 기반 F1 최대화 threshold 탐색
+  - 비율 기반 예측: train 양성 비율 기준 상위 N개를 1로 분류
+    │
+    ▼
+Predict & Submit
+```
+
+---
+
+## 4. 피처 선택 결과
+
+통계 검정(p < 0.05) 기준 유의 피처 9개:
+
+| 피처 | 유형 | 검정 방법 |
+|------|------|-----------|
+| previous_class_count | 숫자형 | Mann-Whitney |
+| re_registration | 숫자형 | Mann-Whitney |
+| major_data | 숫자형 | Mann-Whitney |
+| certificate_acquisition | 범주형 | Chi-squared |
+| whyBDA | 범주형 | Chi-squared |
+| inflow_route | 범주형 | Chi-squared |
+| major1_2 | 범주형 | Chi-squared |
+| count_class | 숫자형 | p < 0.1 (경계선 포함) |
+| hope_for_group | 범주형 | p < 0.1 (경계선 포함) |
+
+---
+
+## 5. 모델 학습 설정
+
+- 교차 검증: StratifiedKFold (n_splits=5)
+- 하이퍼파라미터 탐색: Optuna TPESampler
+- 블렌딩: RF / XGB / CatBoost OOF 확률 균등 평균
+- Threshold: OOF F1 최대화 기준 탐색 (0.15 ~ 0.65 범위)
+
+---
+
+## 6. 디렉토리 구조
+
 ```
 .
 ├─ assets/                # EDA 시각화 결과
 ├─ data/
 │  ├─ raw/                # 원본 데이터
-│  └─ processed/          # 전처리 산출물
-├─ outputs/               # 제출파일
-│  └─ submission.csv
+│  └─ processed/          # 전처리 산출물 (train_v8.csv, test_v8.csv)
+├─ outputs/
+│  └─ submission.csv      # 최종 제출 파일
 ├─ src/
-│  ├─ preprocess.ipynb    # 데이터 전처리
-│  └─ v18.ipynb           # 모델 학습/검증 및 제출 파일 생성(최종)
-├─ requirements.txt       # 최소 실행 패키지 목록
+│  ├─ Preprocess.ipynb    # 데이터 전처리 및 파생변수 생성
+│  └─ v18.ipynb           # 피처 선택 + 모델 학습 + 제출 파일 생성 (최종)
+├─ requirements.txt
 └─ README.md
 ```
+
+---
+
+## 7. 데이터 출처
+
+- 주최: 데이콘 x BDA
+- 대회 링크: https://dacon.io
+
 
