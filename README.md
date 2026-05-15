@@ -103,7 +103,7 @@ Predict & Submit
 │  └─ submission.csv      # 최종 제출 파일
 ├─ src/
 │  ├─ Preprocess.ipynb    # 데이터 전처리 및 파생변수 생성
-│  └─ v18.ipynb           # 피처 선택 + 모델 학습 + 제출 파일 생성 (최종)
+│  └─ modeling.ipynb           # 피처 선택 + 모델 학습 + 제출 파일 생성 (최종)
 ├─ requirements.txt
 └─ README.md
 ```
